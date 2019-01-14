@@ -20,7 +20,7 @@ func main() {
 	ga := setup()
 
 	// Find the minimum
-	err := ga.Minimize(genomes.RandomImagePerformance)
+	err := ga.Minimize(genomes.CreateGImgRed)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -38,20 +38,33 @@ func setup() *eaopt.GA {
 		panic(err)
 	}
 
+	/*model := eaopt.ModRing{
+		Selector:eaopt.SelElitism{
+
+		}
+	}*/
 	const popSize = 2000
+	m := eaopt.ModDownToSize{
+		NOffsprings: popSize * 2,
+		SelectorA:   eaopt.SelElitism{},
+		SelectorB:   eaopt.SelElitism{},
+		MutRate: 1.0,
+		CrossRate:   .5,
+	}
+	/* m := eaopt.ModSteadyState{
+		Selector: eaopt.SelElitism{},
+		KeepBest: true,
+		MutRate: 1.0,
+		CrossRate: .7,
+	} */
+
 	// Instantiate a GA with a GAConfig
 	ga, err := eaopt.GAConfig{
 		NPops:        1,
 		PopSize:      popSize,
 		HofSize:      popSize * .1, // determines how many of the best individuals should be recorded.
 		NGenerations: 2000,
-		Model: eaopt.ModGenerational{
-			Selector: eaopt.SelTournament{
-				NContestants: uint(1.0 * 100),
-			},
-			MutRate:   0.5,
-			CrossRate: 0.7,
-		},
+		Model: m,
 		ParallelEval: false,
 	}.NewGA()
 	if err != nil {
@@ -66,14 +79,14 @@ func setup() *eaopt.GA {
 
 		fmt.Printf("Best fitness at generation %d: %f\n", i, ga.HallOfFame[0].Fitness)
 
-		// save top Individual after each generation (overwrites file each time) 
-		ga.HallOfFame[0].Genome.(genomes.ImageRandomGenomePerformance).SaveImage(path, "Generation: " + strconv.Itoa(i))
+		// save top Individual after each generation (overwrites file each time)
+		ga.HallOfFame[0].Genome.(genomes.GImgRed).SaveImage(path, "Generation: " + strconv.Itoa(i))
 
 		// save graph of results after each generation (overwrites file each time)
 		fitnesses = append(fitnesses, ga.HallOfFame[0].Fitness/theoreticalMax)
 		title := fmt.Sprintf("Genome:%s,Model:%s,Popsize:%d", reflect.TypeOf(ga.HallOfFame[0].Genome), reflect.TypeOf(ga.Model), popSize)
 		createLinePlot("out/graphs/", title, ga.Age,fitnesses)
-		ga.HallOfFame[0].Genome.(genomes.ImageRandomGenomePerformance).SaveImage("out/graphs/" + title + "Winner.jpg", "")
+		ga.HallOfFame[0].Genome.(genomes.GImgRed).SaveImage("out/graphs/" + title + "Winner.jpg", "")
 	}
 	count := 0
 	prevFitness := 0.0
@@ -86,8 +99,7 @@ func setup() *eaopt.GA {
 		}
 		prevFitness = currFitness
 		count++
-		if count > 5 {
-
+		if count > 20 {
 			return true
 		}
 		return false

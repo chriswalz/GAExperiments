@@ -39,17 +39,21 @@ func init()  {
 
 }
 
-type ImageRandomGenomePerformance []uint8
+type GImgRed []uint8
 
-// tri color
-func (genome ImageRandomGenomePerformance) Evaluate() (float64, error) {
+// the more red the image the better
+// image is represented by an array of pixels
+// every 4 indicies represents a new pixel RGBA - (0,1,2,3)
+func (genome GImgRed) Evaluate() (float64, error) {
 	var sum float64 = 0
 	for i := 0; i < len(genome); i++ {
 		if i % 4 == 0 {
 			sum += float64(genome[i])
 		} else if i % 4 == 3 {
+			genome[i] = 255
 			sum += float64(genome[i])
 		} else {
+			genome[i] = 0
 			sum -= float64(genome[i])
 		}
 	}
@@ -58,7 +62,7 @@ func (genome ImageRandomGenomePerformance) Evaluate() (float64, error) {
 
 
 // Mutate X% of genome
-func (genome ImageRandomGenomePerformance) Mutate(rng *rand.Rand) {
+func (genome GImgRed) Mutate(rng *rand.Rand) {
 	MutUint8(genome, 0.01, rng)
 	for i := 0; i < len(genome); i++ {
 		if i % 4 == 0 {
@@ -66,25 +70,25 @@ func (genome ImageRandomGenomePerformance) Mutate(rng *rand.Rand) {
 		} else if i % 4 == 3 {
 			genome[i] = 255
 		} else {
-			//genome[i] = 0
+			genome[i] = 0
 		}
 	}
 }
 
 // No crossover
-func (genome ImageRandomGenomePerformance) Crossover(Y eaopt.Genome, rng *rand.Rand) {
-	CrossUniformUint8(genome, Y.(ImageRandomGenomePerformance), rng)
+func (genome GImgRed) Crossover(Y eaopt.Genome, rng *rand.Rand) {
+	CrossUniformUint8(genome, Y.(GImgRed), rng)
 }
 
 // Clone a Vector to produce a new one that points to a different slice.
-func (genome ImageRandomGenomePerformance) Clone() eaopt.Genome {
-	newGenome := make(ImageRandomGenomePerformance, len(genome))
+func (genome GImgRed) Clone() eaopt.Genome {
+	newGenome := make(GImgRed, len(genome))
 	copy(newGenome, genome)
 	return newGenome
 }
 
 // starts with a random image
-func RandomImagePerformance(rng *rand.Rand) eaopt.Genome {
+func CreateGImgRed(rng *rand.Rand) eaopt.Genome {
 	img := image.NewRGBA(image.Rect(0, 0, canonImg.Bounds().Dx(), canonImg.Bounds().Dy()))
 	dx := img.Bounds().Dx()
 	dy := img.Bounds().Dy()
@@ -100,7 +104,7 @@ func RandomImagePerformance(rng *rand.Rand) eaopt.Genome {
 		}
 	}
 
-	gp := make(ImageRandomGenomePerformance, len(img.Pix))
+	gp := make(GImgRed, len(img.Pix))
 	copy(gp, img.Pix)
 	return gp
 }
@@ -129,7 +133,7 @@ func addLabel(img *image.RGBA, x, y int, label string) {
 
 }
 
-func (genome ImageRandomGenomePerformance) SaveImage(path, label string) {
+func (genome GImgRed) SaveImage(path, label string) {
 	newImg := image.NewRGBA(image.Rect(0, 0, canonImg.Bounds().Dx(), canonImg.Bounds().Dy()))
 	copy(newImg.Pix, genome)
 
